@@ -428,6 +428,7 @@ class Service(UrlService):
         self.order = list(ORDER)
         self.definitions = deepcopy(CHARTS)
         self.objects = dict()
+        self.use_api = False
 
     def check(self):
         if not self.url:
@@ -447,6 +448,11 @@ class Service(UrlService):
         except ValueError:
             return None
 
+        # Test for the unified Nginx API
+        if isinstance(response, list) and 1 in response:
+            response = self.build_status()
+            self.use_api = True
+
         for obj_cls in [WebZone, WebUpstream, Cache]:
             for obj_name in response.get(obj_cls.key, list()):
                 obj = obj_cls(name=obj_name, response=response)
@@ -458,15 +464,32 @@ class Service(UrlService):
 
         return bool(self.objects)
 
+    def build_status(self):
+        """
+        Query the Nginx unified API to build a dict matching the old status API structure
+        :return: dict
+        """
+        status = dict()
+        status['caches'] = loads(self._get_raw_data(self.url + '/1/http/caches'))
+        status['connections'] = loads(self._get_raw_data(self.url + '/1/connections'))
+        status['requests'] = loads(self._get_raw_data(self.url + '/1/http/requests'))
+        status['server_zones'] = loads(self._get_raw_data(self.url + '/1/http/server_zones'))
+        status['slabs'] = loads(self._get_raw_data(self.url + '/1/slabs'))
+        status['upstreams'] = loads(self._get_raw_data(self.url + '/1/http/upstreams'))
+        return status
+
     def _get_data(self):
         """
         Format data received from http request
         :return: dict
         """
-        raw_data = self._get_raw_data()
-        if not raw_data:
-            return None
-        response = loads(raw_data)
+        if self.use_api:
+            response = self.build_status()
+        else:
+            raw_data = self._get_raw_data()
+            if not raw_data:
+                return None
+            response = loads(raw_data)
 
         data = parse_json(response, METRICS['SERVER'])
         data['ssl_memory_usage'] = data['slabs_SSL_pages_used'] / float(data['slabs_SSL_pages_free']) * 1e4

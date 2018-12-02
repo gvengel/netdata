@@ -94,6 +94,24 @@ def cache_charts(cache):
     family = 'cache {0}'.format(cache.real_name)
     charts = OrderedDict()
 
+    charts['{0}_current_hit_rate'.format(cache.name)] = {
+        'options': [None, 'Current Hit Rate Ratio', '%', family,
+                    'nginx_plus.cache_current_hit_rate', 'stacked'],
+        'lines': [
+            ['_'.join([cache.name, 'hit_responses']), 'hit', 'percentage-of-incremental-row'],
+            ['_'.join([cache.name, 'bypass_responses']), 'bypass', 'percentage-of-incremental-row'],
+            ['_'.join([cache.name, 'miss_responses']), 'miss', 'percentage-of-incremental-row'],
+        ]
+    }
+    charts['{0}_historic_hit_rate'.format(cache.name)] = {
+        'options': [None, 'Historic Hit Rate Ratio', '%', family,
+                    'nginx_plus.cache_historic_hit_rate', 'stacked'],
+        'lines': [
+            ['_'.join([cache.name, 'hit_responses']), 'hit', 'percentage-of-absolute-row'],
+            ['_'.join([cache.name, 'bypass_responses']), 'bypass', 'percentage-of-absolute-row'],
+            ['_'.join([cache.name, 'miss_responses']), 'miss', 'percentage-of-absolute-row'],
+        ]
+    }
     charts['{0}_traffic'.format(cache.name)] = {
         'options': [None, 'Traffic', 'KB', family, 'nginx_plus.cache_traffic', 'stacked'],
         'lines': [
@@ -313,6 +331,9 @@ METRICS = {
         'received'
     ],
     'CACHE': [
+        'hit.responses',
+        'miss.responses',
+        'bypass.responses',
         'hit.bytes',  # served
         'miss.bytes_written',  # written
         'miss.bytes'  # bypass

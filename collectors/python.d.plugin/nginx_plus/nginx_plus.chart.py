@@ -108,6 +108,12 @@ def cache_charts(cache):
             ['_'.join([cache.name, 'memory_usage']), 'usage', 'absolute', 1, 100],
         ]
     }
+    charts['{0}_cold'.format(cache.name)] = {
+        'options': [None, 'Cold State', 'cold', family, 'nginx_plus.cache_cold', 'area'],
+        'lines': [
+            ['_'.join([cache.name, 'cold']), 'cold', 'absolute'],
+        ]
+    }
     return charts
 
 
@@ -310,7 +316,7 @@ METRICS = {
         'hit.bytes',  # served
         'miss.bytes_written',  # written
         'miss.bytes'  # bypass
-
+        'cold'
     ]
 }
 
